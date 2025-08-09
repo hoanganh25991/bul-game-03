@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Test</title>
+    <style>
+        body { margin: 20px; font-family: Arial; }
+        canvas { border: 2px solid black; background: #333; }
+        button { padding: 10px; margin: 5px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>Test Gậy Phép</h1>
+    <canvas id="canvas" width="400" height="300"></canvas>
+    <br>
+    <button onclick="attack()">Tấn công!</button>
+    <button onclick="stop()">Dừng</button>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let isAttacking = false;
+        let playerX = 200;
+        let playerY = 150;
+        
+        // Quả cầu năng lượng bay
+        let energyBall = null;
+        
+        // Kẻ địch
+        let enemy = {
+            x: 350,
+            y: 100,
+            hp: 100,
+            maxHp: 100,
+            hit: false,
+            hitTimer: 0
+        };
+        
+        function attack() {
+            if (energyBall) return; // Không cho tấn công liên tục
+            
+            isAttacking = true;
+            console.log("Bắt đầu tấn công!");
+            
+            // Tạo quả cầu năng lượng bay về phía địch
+            setTimeout(() => {
+                energyBall = {
+                    x: playerX + 25,
+                    y: playerY - 20,
+                    targetX: enemy.x,
+                    targetY: enemy.y,
+                    speed: 8,
+                    size: 12,
+                    trail: [] // Đuôi sáng
+                };
+                isAttacking = false; // Dừng hiệu ứng gậy phép
+            }, 500); // Sau 0.5 giây
+        }
+        
+        function stop() {
+            isAttacking = false;
+            energyBall = null;
+            enemy.hit = false;
+            enemy.hp = enemy.maxHp;
+            console.log("Reset game!");
+        }
+        
+        function draw() {
+            // Xóa canvas
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Cập nhật timer của địch
+            if (enemy.hitTimer > 0) {
+                enemy.hitTimer--;
+                if (enemy.hitTimer <= 0) {
+                    enemy.hit = false;
+                }
+            }
+            
+            // Vẽ kẻ địch
+            ctx.fillStyle = enemy.hit ? '#ff4444' : '#ff6b6b';
+            ctx.beginPath();
+            ctx.arc(enemy.x, enemy.y, 20, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Thanh máu địch
+            const barWidth = 40;
+            const hpPercent = enemy.hp / enemy.maxHp;
+            ctx.fillStyle = 'red';
+            ctx.fillRect(enemy.x - barWidth/2, enemy.y - 35, barWidth, 4);
+            ctx.fillStyle = 'green';
+            ctx.fillRect(enemy.x - barWidth/2, enemy.y - 35, barWidth * hpPercent, 4);
+            
+            // Vẽ người chơi (hình tròn xanh)
+            ctx.fillStyle = '#4299e1';
+            ctx.beginPath();
+            ctx.arc(playerX, playerY, 15, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Vẽ gậy phép nếu đang tấn công
+            if (isAttacking) {
+                const staffX = playerX + 25;
+                const staffY = playerY;
+                
+                // Thân gậy
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(staffX, staffY - 15);
+                ctx.lineTo(staffX, staffY + 15);
+                ctx.stroke();
+                
+                // Quả cầu năng lượng
+                const time = Date.now() * 0.01;
+                const energyX = staffX;
+                const energyY = staffY - 20;
+                
+                // Lớp ngoài (lớn nhất)
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
+                ctx.beginPath();
+                ctx.arc(energyX, energyY, 15 + Math.sin(time) * 3, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Lớp giữa
+                ctx.fillStyle = 'rgba(0, 200, 255, 0.7)';
+                ctx.beginPath();
+                ctx.arc(energyX, energyY, 10 + Math.sin(time * 1.5) * 2, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Lõi trung tâm
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.beginPath();
+                ctx.arc(energyX, energyY, 5 + Math.sin(time * 2) * 1, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Tia sáng
+                ctx.strokeStyle = '#00FFFF';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * Math.PI) / 3 + time * 0.5;
+                    const startX = energyX + Math.cos(angle) * 8;
+                    const startY = energyY + Math.sin(angle) * 8;
+                    const endX = energyX + Math.cos(angle) * 25;
+                    const endY = energyY + Math.sin(angle) * 25;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(endX, endY);
+                    ctx.stroke();
+                }
+                
+                // Hạt năng lượng bay xung quanh
+                for (let i = 0; i < 4; i++) {
+                    const particleAngle = time * 2 + (i * Math.PI) / 2;
+                    const particleRadius = 30;
+                    const particleX = energyX + Math.cos(particleAngle) * particleRadius;
+                    const particleY = energyY + Math.sin(particleAngle) * particleRadius;
+                    
+                    ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(particleX, particleY, 3, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            }
+            
+            // Cập nhật và vẽ quả cầu năng lượng bay
+            if (energyBall) {
+                // Tính toán hướng bay
+                const dx = energyBall.targetX - energyBall.x;
+                const dy = energyBall.targetY - energyBall.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 25) {
+                    // Trúng địch!
+                    enemy.hit = true;
+                    enemy.hitTimer = 30; // 0.5 giây
+                    enemy.hp = Math.max(0, enemy.hp - 25);
+                    energyBall = null;
+                    console.log("Trúng địch! HP còn: " + enemy.hp);
+                } else {
+                    // Di chuyển về phía địch
+                    energyBall.x += (dx / distance) * energyBall.speed;
+                    energyBall.y += (dy / distance) * energyBall.speed;
+                    
+                    // Thêm vào đuôi sáng
+                    energyBall.trail.push({x: energyBall.x, y: energyBall.y});
+                    if (energyBall.trail.length > 8) {
+                        energyBall.trail.shift();
+                    }
+                    
+                    // Vẽ đuôi sáng
+                    for (let i = 0; i < energyBall.trail.length; i++) {
+                        const alpha = (i + 1) / energyBall.trail.length * 0.5;
+                        const size = (i + 1) / energyBall.trail.length * energyBall.size;
+                        ctx.fillStyle = `rgba(0, 255, 255, ${alpha})`;
+                        ctx.beginPath();
+                        ctx.arc(energyBall.trail[i].x, energyBall.trail[i].y, size, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                    
+                    // Vẽ quả cầu chính
+                    const time = Date.now() * 0.02;
+                    
+                    // Lớp ngoài
+                    ctx.fillStyle = 'rgba(0, 255, 255, 0.6)';
+                    ctx.beginPath();
+                    ctx.arc(energyBall.x, energyBall.y, energyBall.size + Math.sin(time) * 2, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                    // Lớp giữa
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.beginPath();
+                    ctx.arc(energyBall.x, energyBall.y, energyBall.size * 0.7, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                    // Lõi
+                    ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+                    ctx.beginPath();
+                    ctx.arc(energyBall.x, energyBall.y, energyBall.size * 0.3, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                    // Tia sáng xung quanh
+                    ctx.strokeStyle = '#00FFFF';
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i < 4; i++) {
+                        const angle = (i * Math.PI) / 2 + time;
+                        const startX = energyBall.x + Math.cos(angle) * energyBall.size;
+                        const startY = energyBall.y + Math.sin(angle) * energyBall.size;
+                        const endX = energyBall.x + Math.cos(angle) * (energyBall.size + 8);
+                        const endY = energyBall.y + Math.sin(angle) * (energyBall.size + 8);
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(startX, startY);
+                        ctx.lineTo(endX, endY);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            // Vẽ text hướng dẫn
+            ctx.fillStyle = 'white';
+            ctx.font = '14px Arial';
+            ctx.fillText('Nhấn "Tấn công!" để bắn quả cầu năng lượng', 10, 20);
+            ctx.fillText('Trạng thái: ' + (isAttacking ? 'ĐANG TẤN CÔNG' : energyBall ? 'QUẢ CẦU BAY' : 'Sẵn sàng'), 10, 40);
+            ctx.fillText('HP địch: ' + enemy.hp + '/' + enemy.maxHp, 10, 60);
+            
+            requestAnimationFrame(draw);
+        }
+        
+        // Bắt đầu vẽ
+        draw();
+        
+        console.log("Game đã khởi tạo!");
+    </script>
+</body>
+</html>

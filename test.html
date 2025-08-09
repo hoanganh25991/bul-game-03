@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            margin: 20px;
+        }
+        canvas {
+            border: 2px solid #333;
+            background: #2d3748;
+        }
+        .stats {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🗡️ Test Game</h1>
+    
+    <div class="stats">
+        <span>Cấp độ: <span id="player-level">1</span></span> |
+        <span>Máu: <span id="player-hp">100</span></span> |
+        <span>Vàng: <span id="player-gold">0</span></span>
+    </div>
+    
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    
+    <div style="margin-top: 10px;">
+        <p>Nhấn WASD để di chuyển, SPACE để tấn công</p>
+        <button id="heal-btn">🧪 Hồi máu</button>
+    </div>
+    
+    <div id="game-log" style="margin-top: 10px; padding: 10px; background: white; height: 100px; overflow-y: auto;">
+        <p>Game đã khởi tạo!</p>
+    </div>
+
+    <script>
+        // Game state đơn giản
+        const gameState = {
+            player: {
+                x: 300,
+                y: 200,
+                level: 1,
+                hp: 100,
+                maxHp: 100,
+                gold: 0,
+                isAttacking: false,
+                attackTimer: 0
+            },
+            enemies: []
+        };
+
+        // Canvas
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Khởi tạo
+        function init() {
+            console.log("Game khởi tạo!");
+            addToLog("Chào mừng đến với Test Game!");
+            
+            // Tạo vài quái vật
+            for (let i = 0; i < 3; i++) {
+                gameState.enemies.push({
+                    x: Math.random() * 500 + 50,
+                    y: Math.random() * 300 + 50,
+                    hp: 50,
+                    color: '#ff6b6b'
+                });
+            }
+            
+            gameLoop();
+            setupControls();
+        }
+
+        // Game loop
+        function gameLoop() {
+            // Xóa canvas
+            ctx.fillStyle = '#2d3748';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Vẽ lưới
+            ctx.strokeStyle = '#4a5568';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 40) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            // Vẽ người chơi
+            drawPlayer();
+            
+            // Vẽ quái vật
+            gameState.enemies.forEach(enemy => {
+                ctx.fillStyle = enemy.color;
+                ctx.beginPath();
+                ctx.arc(enemy.x, enemy.y, 12, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+            
+            // Cập nhật timer tấn công
+            if (gameState.player.attackTimer > 0) {
+                gameState.player.attackTimer--;
+                if (gameState.player.attackTimer <= 0) {
+                    gameState.player.isAttacking = false;
+                }
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Vẽ người chơi
+        function drawPlayer() {
+            const player = gameState.player;
+            
+            // Vẽ gậy phép nếu đang tấn công
+            if (player.isAttacking) {
+                // Thân gậy
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(player.x + 20, player.y - 10);
+                ctx.lineTo(player.x + 20, player.y + 20);
+                ctx.stroke();
+                
+                // Đầu gậy phép
+                ctx.fillStyle = '#9932CC';
+                ctx.beginPath();
+                ctx.moveTo(player.x + 20, player.y - 20);
+                ctx.lineTo(player.x + 15, player.y - 10);
+                ctx.lineTo(player.x + 20, player.y - 5);
+                ctx.lineTo(player.x + 25, player.y - 10);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Quả cầu năng lượng siêu đẹp!
+                const energyX = player.x + 20;
+                const energyY = player.y - 12;
+                const time = Date.now() * 0.01;
+                
+                // Lớp ngoài - ánh sáng mờ
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.3)';
+                ctx.beginPath();
+                ctx.arc(energyX, energyY, 12 + Math.sin(time) * 2, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Lớp giữa - năng lượng chính
+                ctx.fillStyle = 'rgba(0, 200, 255, 0.7)';
+                ctx.beginPath();
+                ctx.arc(energyX, energyY, 8 + Math.sin(time * 1.5) * 1, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Lõi năng lượng - sáng nhất
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.beginPath();
+                ctx.arc(energyX, energyY, 4 + Math.sin(time * 2) * 0.5, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Tia sáng xung quanh
+                ctx.strokeStyle = '#00FFFF';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i * Math.PI) / 4 + time * 0.5;
+                    const startX = energyX + Math.cos(angle) * 6;
+                    const startY = energyY + Math.sin(angle) * 6;
+                    const endX = energyX + Math.cos(angle) * (18 + Math.sin(time + i) * 3);
+                    const endY = energyY + Math.sin(angle) * (18 + Math.sin(time + i) * 3);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(endX, endY);
+                    ctx.stroke();
+                }
+                
+                // Hạt năng lượng bay xung quanh
+                for (let i = 0; i < 6; i++) {
+                    const particleAngle = time * 2 + (i * Math.PI) / 3;
+                    const particleRadius = 25 + Math.sin(time + i) * 5;
+                    const particleX = energyX + Math.cos(particleAngle) * particleRadius;
+                    const particleY = energyY + Math.sin(particleAngle) * particleRadius;
+                    
+                    ctx.fillStyle = `rgba(0, 255, 255, ${0.8 - (i * 0.1)})`;
+                    ctx.beginPath();
+                    ctx.arc(particleX, particleY, 2, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            }
+            
+            // Vẽ người chơi
+            ctx.fillStyle = '#4299e1';
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, 15, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Vẽ mắt
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(player.x - 5, player.y - 3, 3, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(player.x + 5, player.y - 3, 3, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(player.x - 5, player.y - 3, 1, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(player.x + 5, player.y - 3, 1, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        // Điều khiển
+        const keys = {};
+        
+        function setupControls() {
+            document.addEventListener('keydown', (e) => {
+                keys[e.key.toLowerCase()] = true;
+                
+                if (e.key === ' ') {
+                    e.preventDefault();
+                    // Kích hoạt hiệu ứng tấn công
+                    gameState.player.isAttacking = true;
+                    gameState.player.attackTimer = 60; // 1 giây
+                    addToLog("Tấn công với gậy phép!");
+                    console.log("Tấn công!");
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                keys[e.key.toLowerCase()] = false;
+            });
+            
+            // Di chuyển
+            setInterval(() => {
+                const speed = 3;
+                if (keys['w'] || keys['arrowup']) gameState.player.y -= speed;
+                if (keys['s'] || keys['arrowdown']) gameState.player.y += speed;
+                if (keys['a'] || keys['arrowleft']) gameState.player.x -= speed;
+                if (keys['d'] || keys['arrowright']) gameState.player.x += speed;
+                
+                // Giới hạn
+                gameState.player.x = Math.max(20, Math.min(canvas.width - 20, gameState.player.x));
+                gameState.player.y = Math.max(20, Math.min(canvas.height - 20, gameState.player.y));
+            }, 16);
+        }
+
+        // Log
+        function addToLog(message) {
+            const log = document.getElementById('game-log');
+            const p = document.createElement('p');
+            p.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            log.appendChild(p);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Khởi tạo khi trang load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

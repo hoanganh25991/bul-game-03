@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hành Trình Anh Hùng</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>🗡️ Hành Trình Anh Hùng</h1>
+            <div class="player-stats">
+                <div class="stat">
+                    <span class="stat-label">Cấp độ:</span>
+                    <span id="player-level">1</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Máu:</span>
+                    <span id="player-hp">100</span>/<span id="player-max-hp">100</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Kinh nghiệm:</span>
+                    <span id="player-xp">0</span>/<span id="player-max-xp">100</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Vàng:</span>
+                    <span id="player-gold">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-main">
+            <div class="game-world">
+                <canvas id="gameCanvas" width="600" height="400"></canvas>
+                <div class="controls">
+                    <p>Sử dụng WASD hoặc phím mũi tên để di chuyển</p>
+                    <p>Nhấn SPACE để tấn công khi gần quái vật</p>
+                </div>
+            </div>
+
+            <div class="game-sidebar">
+                <div class="inventory">
+                    <h3>🎒 Túi đồ</h3>
+                    <div id="inventory-items">
+                        <div class="inventory-item">
+                            <span>⚔️ Kiếm</span>
+                            <span class="item-count">1</span>
+                        </div>
+                        <div class="inventory-item">
+                            <span>🛡️ Khiên</span>
+                            <span class="item-count">1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <h3>⚡ Hành động</h3>
+                    <button id="heal-btn" class="action-btn">🧪 Hồi máu (10 Vàng)</button>
+                </div>
+
+                <div class="log">
+                    <h3>📜 Nhật ký</h3>
+                    <div id="game-log">
+                        <p>Chào mừng đến với Hành Trình Anh Hùng!</p>
+                        <p>Hãy khám phá thế giới và đánh bại quái vật!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="battle-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>⚔️ Chiến đấu!</h2>
+            <div class="battle-info">
+                <div class="player-battle-stats">
+                    <h3>🧙‍♂️ Người chơi</h3>
+                    <p>Máu: <span id="battle-player-hp">100</span></p>
+                    <p>Tấn công: <span id="battle-player-attack">20</span></p>
+                </div>
+                <div class="enemy-battle-stats">
+                    <h3 id="enemy-name">👹 Yêu tinh</h3>
+                    <p>Máu: <span id="battle-enemy-hp">50</span></p>
+                    <p>Tấn công: <span id="battle-enemy-attack">15</span></p>
+                </div>
+            </div>
+            <div class="battle-actions">
+                <button id="attack-btn" class="battle-btn">⚔️ Tấn công</button>
+                <button id="defend-btn" class="battle-btn">🛡️ Phòng thủ</button>
+                <button id="run-btn" class="battle-btn">🏃‍♂️ Chạy trốn</button>
+            </div>
+            <div id="battle-log"></div>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>
